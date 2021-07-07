@@ -5,8 +5,7 @@ const FILES_TO_CACHE = [
     '/styles.css',
     '/assets/images/icons/icon-192x192.png',
     '/assets/images/icons/icon-512x512.png',
-    '/dist/favorites.bundle.js',
-    '/dist/topic.bundle.js',
+    "/manifest.webmanifest",
     'https://fonts.googleapis.com/css?family=Istok+Web|Montserrat:800&display=swap',
     'https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css',
   ];
