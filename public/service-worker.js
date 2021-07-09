@@ -44,7 +44,7 @@ self.addEventListener('activate', (event) => {
       return Promise.all(
         cacheNames.map(name => {
           if (name !== PRECACHE && name !== RUNTIME) {
-            console.log("deciding fate of old data...", name);
+            // console.log("deciding fate of old data...", name);
             return caches.delete(name);
           }
         })
@@ -74,10 +74,10 @@ self.addEventListener('fetch', (event) => {
             return res;
           })
           .catch(err => {
-            console.log(err);
+            // console.log(err);
             return cache.match(event.request) || {};
           });
-      }).catch(err => console.log(err))
+      }).catch(err => console.log(""))
     );
   }
 

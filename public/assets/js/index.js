@@ -30,11 +30,9 @@ let myitem = {
 
 const reqDB = window.indexedDB.open("offlineBugetList", 3);
 
-const openRequest = indexedDB.open("offlineBugetList", 3);
-
 reqDB.onupgradeneeded = event => {
   const db = event.target.result;
-  const offlineStore = db.createObjectStore("offlineList", { keyPath: "offlineID" });
+  const offlineStore = db.createObjectStore("offlineList", { keyPath: "offlineID", autoIncrement: true });
   offlineStore.createIndex("entryIndex", "entry");
 }
 
@@ -46,15 +44,15 @@ reqDB.onsuccess = () => {
 }
 
 reqDB.onerror = () => {
-  console.log("Error", request.error);
+  console.log("Error", reqDB.error);
 };
 
 const saveRecord = (offlineTransaction) => {
   const db = reqDB.result;
   const transaction = db.transaction(["offlineList"], "readwrite");
   const offlineStore = transaction.objectStore("offlineList");
-  // const request = offlineStore.add(offlineTransaction)
-  console.log(offlineTransaction);
+  const request = offlineStore.add({ entry: 2, transaction: offlineTransaction})
+  // console.log(offlineTransaction);
 
   request.onsuccess = () => console.log("entry added to the store", request.result);
   request.onerror = () => console.log("Error", request.error)
@@ -204,6 +202,7 @@ function sendTransaction(isAdding) {
     }
   })
     .then(response => {
+      saveRecord(transaction)
       return response.json();
     })
     .then(data => {
