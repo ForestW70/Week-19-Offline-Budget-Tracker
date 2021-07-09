@@ -2,6 +2,14 @@
 ${data.license} - ${userLicense} - For Good.
 
 
+Utilize NASA developed API's to create and browse a user-unique, dashboard experience. Explore space, your own way!
+
+GWU group project 1, by:
+Cameron Findlay // camjofindlay17
+Sallieu Kanu // salmankanu
+Alex White // awhite927k
+Forest Wilson // ForestW70
+
 ## Table of Contents:
 - [Project description](#project-description)
 - [Usage instructions](#usage-instructions)
