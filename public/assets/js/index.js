@@ -102,6 +102,14 @@ function populateTotal() {
 
   let totalEl = document.querySelector("#total");
   totalEl.textContent = total;
+
+  // spice swap brought to you by Forest Wilson(tm)
+  const totalContainer = document.querySelector("#cswap")
+  if (total >= 0) {
+    totalContainer.classList.remove('negative')
+  } else {
+    totalContainer.classList.add('negative')
+  }
 }
 
 function populateTable() {
@@ -149,9 +157,9 @@ function populateChart() {
     data: {
       labels,
       datasets: [{
-        label: "Total Over Time",
+        label: "Be responsible, ok?",
         fill: true,
-        backgroundColor: "#6666ff",
+        backgroundColor: "#922e2e",
         data
       }]
     }
