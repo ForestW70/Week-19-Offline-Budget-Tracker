@@ -17,6 +17,7 @@ const FILES_TO_CACHE = [
   'https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css',
 ];
 
+
 // variables for pre-cached items and client side cache
 const PRECACHE = 'precache-v1';
 const RUNTIME = 'runtime-cache';
@@ -24,6 +25,7 @@ const RUNTIME = 'runtime-cache';
 
 // install event
 // open up our pre-cache from caches, then in that cache, add all the files in the FILES_TO_CACHE array.
+// ** caches api route into runtime. ideally this would be handled by clients.claim, but I could not figure out the timing for that to work. 
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(RUNTIME).then(cache => {
@@ -42,7 +44,7 @@ self.addEventListener('install', (event) => {
 // activate event
 // after install, get names of all caches, then return a promise that maps through cache names, 
 // checks if the name is not one of our active cache names, then deletes it.
-self.addEventListener('activate', async (event) => {
+self.addEventListener('activate', (event) => {
   event.waitUntil(clients.claim());
 
   event.waitUntil(
@@ -55,24 +57,11 @@ self.addEventListener('activate', async (event) => {
         })
       );
     })
-
   );
 
-  // await self.clients.claim().then(console.log("hi"))
-  
-  // window.location.reload();
+  // would have handled SW to activate immediatly, but had trouble implementing this.
+  // self.clients.claim();
 });
-
-
-// navigator.serviceWorker.ready.then(registration => {
-//   console.log("hi")
-// });
-
-// console.log(window)
-
-// if (navigator.serviceWorker.ready) {
-
-
 
 
 // fetch event
@@ -93,7 +82,6 @@ self.addEventListener('fetch', (event) => {
             return res;
           })
           .catch(err => {
-            // console.log(err);
             return cache.match(event.request) || {};
           });
       }).catch(err => console.log(err))
@@ -101,7 +89,7 @@ self.addEventListener('fetch', (event) => {
   } else {
 
     // if request doenst include "...", then fetch request, which will err, and catch.
-    // return the matched request from cache, and return responce.
+    // return the matched request from cache, and return response.
     event.respondWith(
       fetch(event.request).catch(() => {
         return caches.match(event.request).then(res => {
