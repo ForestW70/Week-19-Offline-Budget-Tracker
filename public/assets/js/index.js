@@ -1,5 +1,87 @@
+// ** courtesy of 2U ** //
+
 let transactions = [];
 let myChart;
+
+
+// const request = window.indexedDB.open("toDoList", 1);
+
+// Create schema
+// request.onupgradeneeded = event => {
+//   const db = event.target.result;
+
+//   // Creates an object store with a listID keypath that can be used to query on.
+//   const toDoListStore = db.createObjectStore("toDoList", { keyPath: "listID" });
+//   // Creates a statusIndex that we can query on.
+//   toDoListStore.createIndex("statusIndex", "status");
+
+// }
+
+
+
+
+
+let myitem = {
+  name: "forest",
+  age: 500,
+  gum: "yes"
+}
+
+
+const reqDB = window.indexedDB.open("offlineBugetList", 3);
+
+const openRequest = indexedDB.open("offlineBugetList", 3);
+
+reqDB.onupgradeneeded = event => {
+  const db = event.target.result;
+  const offlineStore = db.createObjectStore("offlineList", { keyPath: "offlineID" });
+  offlineStore.createIndex("entryIndex", "entry");
+}
+
+reqDB.onsuccess = () => {
+  const db = reqDB.result;
+  const transact = db.transaction(["offlineList"], "readwrite");
+  const addEntryReq = transact.objectStore("offlineList");
+  addEntryReq.add({ offlineID: 1, entry: 1, transaction: myitem});
+}
+
+reqDB.onerror = () => {
+  console.log("Error", request.error);
+};
+
+const saveRecord = (offlineTransaction) => {
+  const db = reqDB.result;
+  const transaction = db.transaction(["offlineList"], "readwrite");
+  const offlineStore = transaction.objectStore("offlineList");
+  // const request = offlineStore.add(offlineTransaction)
+  console.log(offlineTransaction);
+
+  request.onsuccess = () => console.log("entry added to the store", request.result);
+  request.onerror = () => console.log("Error", request.error)
+
+  // const transact = reqDB.transaction(["offlineList"], "readwrite")
+  // const addEntryReq = transact.objectStore("offlineList");
+  // addEntryReq.add({ offlineID: 2, entry: 1, transaction: offlineTransaction});
+}
+
+
+
+// request.onsuccess = () => {
+//   const db = request.result;
+//   const transaction = db.transaction(["toDoList"], "readwrite");
+//   const toDoListStore = transaction.objectStore("toDoList");
+//   const statusIndex = toDoListStore.index("statusIndex");
+//   toDoListStore.add({ listID: "1", status: "complete", name: item });
+// }
+
+// function saveRecord(item) {
+//   request.onsuccess = () => {
+//     const db = request.result;
+//     const transaction = db.transaction(["toDoList"], "readwrite");
+
+//   }
+// }
+
 
 fetch("/api/transaction")
   .then(response => {
@@ -66,14 +148,14 @@ function populateChart() {
 
   myChart = new Chart(ctx, {
     type: 'line',
-      data: {
-        labels,
-        datasets: [{
-            label: "Total Over Time",
-            fill: true,
-            backgroundColor: "#6666ff",
-            data
-        }]
+    data: {
+      labels,
+      datasets: [{
+        label: "Total Over Time",
+        fill: true,
+        backgroundColor: "#6666ff",
+        data
+      }]
     }
   });
 }
@@ -111,7 +193,7 @@ function sendTransaction(isAdding) {
   populateChart();
   populateTable();
   populateTotal();
-  
+
   // also send to server
   fetch("/api/transaction", {
     method: "POST",
@@ -121,34 +203,35 @@ function sendTransaction(isAdding) {
       "Content-Type": "application/json"
     }
   })
-  .then(response => {    
-    return response.json();
-  })
-  .then(data => {
-    if (data.errors) {
-      errorEl.textContent = "Missing Information";
-    }
-    else {
+    .then(response => {
+      return response.json();
+    })
+    .then(data => {
+      if (data.errors) {
+        errorEl.textContent = "Missing Information";
+      }
+      else {
+        // clear form
+        nameEl.value = "";
+        amountEl.value = "";
+      }
+    })
+    .catch(err => {
+      // fetch failed, so save in indexed db
+      saveRecord(transaction);
+
+
       // clear form
       nameEl.value = "";
       amountEl.value = "";
-    }
-  })
-  .catch(err => {
-    // fetch failed, so save in indexed db
-    saveRecord(transaction);
-
-    // clear form
-    nameEl.value = "";
-    amountEl.value = "";
-  });
+    });
 }
 
-document.querySelector("#add-btn").onclick = function() {
+document.querySelector("#add-btn").onclick = function () {
   sendTransaction(true);
 };
 
-document.querySelector("#sub-btn").onclick = function() {
+document.querySelector("#sub-btn").onclick = function () {
   sendTransaction(false);
 };
 

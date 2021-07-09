@@ -1,3 +1,11 @@
+// Life cycle -
+// * register the service worker - moves to SW thread, looks for install event.
+// * install the service worker - ready to cache assets, looks for activate event.
+// * becomes active in the global scope - has global access, ability to look at fetch events.
+
+
+
+// all files to load into the cache
 const FILES_TO_CACHE = [
   '/',
   '/index.html',
@@ -9,62 +17,78 @@ const FILES_TO_CACHE = [
   'https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css',
 ];
 
+// variables for pre-cached items and client side cache
 const PRECACHE = 'precache-v1';
-const RUNTIME = 'runtime';
+const RUNTIME = 'runtime-cache';
 
+
+// install event
+// open up our pre-cache from caches, then in that cache, add all the files in the FILES_TO_CACHE array.
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(PRECACHE).then(cache => {
       cache.addAll(FILES_TO_CACHE);
     })
   );
+
+  // forces the waiting service worker to replace the active service worker if there is already an installed one. 
   self.skipWaiting();
 });
 
-// The activate handler takes care of cleaning up old caches.
+
+// activate event
+// after install, get names of all caches, then return a promise that maps through cache names, checks if the name is not one of our active cache names, then deletes it.
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys()
-      .then(cacheNames => {
-        return Promise.all(
-          cacheNames.map(name => {
-            if (name !== PRECACHE && name !== RUNTIME) {
-              console.log("deciding fate of old data...", name);
-              return caches.delete(name);
-            }
-          })
-        );
-      })
+    caches.keys().then(cacheNames => {
+      return Promise.all(
+        cacheNames.map(name => {
+          if (name !== PRECACHE && name !== RUNTIME) {
+            console.log("deciding fate of old data...", name);
+            return caches.delete(name);
+          }
+        })
+      );
+    })
   );
+
+  // lets page not require a reload after service worker is active.
   self.clients.claim();
+  // window.location.replace('/');
 });
 
 
+// fetch event
+// if request url includes "...", then intercept that, and respond with
+// open runtime cache, then fetch request. if that responce is 200, then put a clone of that responce into cache with asociated url. return responce.
+// if responce is not 200, then look through cache and return what was cached for that route, or empty responce.
 self.addEventListener('fetch', (event) => {
   if (event.request.url.includes('/api')) {
     event.respondWith(
       caches.open(RUNTIME).then(cache => {
         return fetch(event.request)
-        .then(res => {
-          if (res.status === 200) {
-            cache.put(event.request.url, res.clone());
-          }
-          return res;
-        })
-        .catch(err => {
-          console.log(err);
-          return cache.match(event.request) || {};
-        });
+          .then(res => {
+            if (res.status === 200) {
+              cache.put(event.request.url, res.clone());
+            }
+            return res;
+          })
+          .catch(err => {
+            console.log(err);
+            return cache.match(event.request) || {};
+          });
       }).catch(err => console.log(err))
     );
   }
 
+  // if request doenst include "...", then fetch request, which will err, and catch.
+  // return the matched request from cache, and return responce.
   event.respondWith(
-    fetch(event.request).catch( () => {
+    fetch(event.request).catch(() => {
       return caches.match(event.request).then(res => {
         if (res) {
           return res;
-        } 
+        }
       })
     })
   )
