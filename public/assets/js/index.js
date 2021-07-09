@@ -28,57 +28,78 @@ let myitem = {
 }
 
 
-const reqDB = window.indexedDB.open("offlineBugetList", 3);
+const reqDB = window.indexedDB.open("offlineBugetList", 5);
 
 reqDB.onupgradeneeded = event => {
   const db = event.target.result;
   const offlineStore = db.createObjectStore("offlineList", { keyPath: "offlineID", autoIncrement: true });
-  offlineStore.createIndex("entryIndex", "entry");
-}
-
-reqDB.onsuccess = () => {
-  const db = reqDB.result;
-  const transact = db.transaction(["offlineList"], "readwrite");
-  const addEntryReq = transact.objectStore("offlineList");
-  addEntryReq.add({ offlineID: 1, entry: 1, transaction: myitem});
+  // offlineStore.createIndex("entryIndex", "entry");
 }
 
 reqDB.onerror = () => {
   console.log("Error", reqDB.error);
 };
 
+reqDB.onsuccess = () => {
+  const db = reqDB.result;
+  const transact = db.transaction(["offlineList"], "readwrite");
+  const addEntryReq = transact.objectStore("offlineList");
+}
+
 const saveRecord = (offlineTransaction) => {
   const db = reqDB.result;
   const transaction = db.transaction(["offlineList"], "readwrite");
   const offlineStore = transaction.objectStore("offlineList");
-  const request = offlineStore.add({ entry: 2, transaction: offlineTransaction})
-  // console.log(offlineTransaction);
+  const request = offlineStore.add(offlineTransaction)
 
   request.onsuccess = () => console.log("entry added to the store", request.result);
   request.onerror = () => console.log("Error", request.error)
 
-  // const transact = reqDB.transaction(["offlineList"], "readwrite")
-  // const addEntryReq = transact.objectStore("offlineList");
-  // addEntryReq.add({ offlineID: 2, entry: 1, transaction: offlineTransaction});
 }
 
+function checkDatabase() {
+  console.log('checking..');
+  const db = reqDB.result;
+  // Open a transaction on your BudgetStore db
+  let transaction = db.transaction(["offlineList"], "readwrite");
 
+  // access your BudgetStore object
+  const offlineStore = transaction.objectStore('offlineList');
 
-// request.onsuccess = () => {
-//   const db = request.result;
-//   const transaction = db.transaction(["toDoList"], "readwrite");
-//   const toDoListStore = transaction.objectStore("toDoList");
-//   const statusIndex = toDoListStore.index("statusIndex");
-//   toDoListStore.add({ listID: "1", status: "complete", name: item });
-// }
+  // Get all records from offlineStore and set to a variable
+  const getAll = offlineStore.getAll();
 
-// function saveRecord(item) {
-//   request.onsuccess = () => {
-//     const db = request.result;
-//     const transaction = db.transaction(["toDoList"], "readwrite");
+  // If the request was successful
+  getAll.onsuccess = function () {
+    // If there are items in the store, we need to bulk add them when we are back online
+    if (getAll.result.length > 0) {
+      fetch('/api/transaction/bulk', {
+        method: 'POST',
+        body: JSON.stringify(getAll.result),
+        headers: {
+          Accept: 'application/json, text/plain, */*',
+          'Content-Type': 'application/json',
+        },
+      })
+        .then((response) => response.json())
+        .then((res) => {
+          // If our returned response is not empty
+          if (res.length !== 0) {
+            // Open another transaction to BudgetStore with the ability to read and write
+            let notherTransaction = db.transaction(["offlineList"], "readwrite");
 
-//   }
-// }
+            // Assign the current store to a variable
+            const offlineStore = notherTransaction.objectStore('offlineList');
+
+            // Clear existing entries because our bulk add was successful
+            offlineStore.clear();
+            console.log('Offline cached.');
+          }
+        }).catch(err => console.log(err))
+    }
+  };
+}
+
 
 
 fetch("/api/transaction")
@@ -202,7 +223,6 @@ function sendTransaction(isAdding) {
     }
   })
     .then(response => {
-      saveRecord(transaction)
       return response.json();
     })
     .then(data => {
@@ -233,5 +253,8 @@ document.querySelector("#add-btn").onclick = function () {
 document.querySelector("#sub-btn").onclick = function () {
   sendTransaction(false);
 };
+
+window.addEventListener('online', checkDatabase);
+
 
 

@@ -77,21 +77,22 @@ self.addEventListener('fetch', (event) => {
             // console.log(err);
             return cache.match(event.request) || {};
           });
-      }).catch(err => console.log(""))
+      }).catch(err => console.log(err))
     );
-  }
+  } else {
 
-  // if request doenst include "...", then fetch request, which will err, and catch.
-  // return the matched request from cache, and return responce.
-  event.respondWith(
-    fetch(event.request).catch(() => {
-      return caches.match(event.request).then(res => {
-        if (res) {
-          return res;
-        }
+    // if request doenst include "...", then fetch request, which will err, and catch.
+    // return the matched request from cache, and return responce.
+    event.respondWith(
+      fetch(event.request).catch(() => {
+        return caches.match(event.request).then(res => {
+          if (res) {
+            return res;
+          }
+        })
       })
-    })
-  )
+    )
+  }
 });
 
 
