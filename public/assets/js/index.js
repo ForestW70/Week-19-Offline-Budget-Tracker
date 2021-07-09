@@ -1,77 +1,50 @@
-// ** courtesy of 2U ** //
 
-let transactions = [];
-let myChart;
-
-
-// const request = window.indexedDB.open("toDoList", 1);
-
-// Create schema
-// request.onupgradeneeded = event => {
-//   const db = event.target.result;
-
-//   // Creates an object store with a listID keypath that can be used to query on.
-//   const toDoListStore = db.createObjectStore("toDoList", { keyPath: "listID" });
-//   // Creates a statusIndex that we can query on.
-//   toDoListStore.createIndex("statusIndex", "status");
-
-// }
-
-
-
-
-
-let myitem = {
-  name: "forest",
-  age: 500,
-  gum: "yes"
-}
-
-
+// create open db to create transactions, create variable to handle open requests.
+let db;
 const reqDB = window.indexedDB.open("offlineBugetList", 5);
 
-reqDB.onupgradeneeded = event => {
-  const db = event.target.result;
-  const offlineStore = db.createObjectStore("offlineList", { keyPath: "offlineID", autoIncrement: true });
-  // offlineStore.createIndex("entryIndex", "entry");
-}
 
+// if DB is out of date, reset db variable, create new object store. check for error or sucess.
+reqDB.onupgradeneeded = event => {
+  db = event.target.result;
+  const offlineStore = db.createObjectStore("offlineList", { keyPath: "offlineID", autoIncrement: true });
+}
 reqDB.onerror = () => {
   console.log("Error", reqDB.error);
 };
-
 reqDB.onsuccess = () => {
-  const db = reqDB.result;
-  const transact = db.transaction(["offlineList"], "readwrite");
-  const addEntryReq = transact.objectStore("offlineList");
+  db = reqDB.result;
+  console.log("connected to indexedDB store");
 }
 
+
+// save record to be used if application is offline.
+// set up transaction, link transaction to offline store, then create an add request for passed object.
+// handle sucess/error
 const saveRecord = (offlineTransaction) => {
-  const db = reqDB.result;
+  db = reqDB.result;
   const transaction = db.transaction(["offlineList"], "readwrite");
   const offlineStore = transaction.objectStore("offlineList");
-  const request = offlineStore.add(offlineTransaction)
+  const request = offlineStore.add(offlineTransaction);
 
   request.onsuccess = () => console.log("entry added to the store", request.result);
-  request.onerror = () => console.log("Error", request.error)
-
+  request.onerror = () => console.log("Error", request.error);
 }
 
+
+// function to check database once app returns to online mode.
+// set up transaction process to create a getAll request from DB.
 function checkDatabase() {
   console.log('checking..');
-  const db = reqDB.result;
-  // Open a transaction on your BudgetStore db
-  let transaction = db.transaction(["offlineList"], "readwrite");
-
-  // access your BudgetStore object
+  db = reqDB.result;
+  
+  const transaction = db.transaction(["offlineList"], "readwrite");
   const offlineStore = transaction.objectStore('offlineList');
-
-  // Get all records from offlineStore and set to a variable
   const getAll = offlineStore.getAll();
 
-  // If the request was successful
+  // If the request was successful, check to see if there are any results.
+  // if so, fetch post request to api to add all results to db using body.
   getAll.onsuccess = function () {
-    // If there are items in the store, we need to bulk add them when we are back online
     if (getAll.result.length > 0) {
       fetch('/api/transaction/bulk', {
         method: 'POST',
@@ -81,26 +54,32 @@ function checkDatabase() {
           'Content-Type': 'application/json',
         },
       })
+      // if post was sucessful, convert response to json and check if res exists.
+      // if res exists, set up second transaction to clear indexedDB. catch err if needed.
         .then((response) => response.json())
         .then((res) => {
-          // If our returned response is not empty
           if (res.length !== 0) {
-            // Open another transaction to BudgetStore with the ability to read and write
-            let notherTransaction = db.transaction(["offlineList"], "readwrite");
-
-            // Assign the current store to a variable
-            const offlineStore = notherTransaction.objectStore('offlineList');
-
-            // Clear existing entries because our bulk add was successful
+            const transaction2 = db.transaction(["offlineList"], "readwrite");
+            const offlineStore = transaction2.objectStore('offlineList');
             offlineStore.clear();
             console.log('Offline cached.');
           }
-        }).catch(err => console.log(err))
+        }).catch(err => console.log(err));
     }
   };
 }
 
+// event handler to look if app returns to online. if so, run checkdb function.
+window.addEventListener('online', checkDatabase);
 
+
+
+// ------------------------------------//
+// ** Following code courtesy of 2U ** //
+// ------------------------------------//
+
+let transactions = [];
+let myChart;
 
 fetch("/api/transaction")
   .then(response => {
@@ -236,9 +215,8 @@ function sendTransaction(isAdding) {
       }
     })
     .catch(err => {
-      // fetch failed, so save in indexed db
       saveRecord(transaction);
-
+      console.log("No connection, saved to offline.")
 
       // clear form
       nameEl.value = "";
@@ -253,8 +231,3 @@ document.querySelector("#add-btn").onclick = function () {
 document.querySelector("#sub-btn").onclick = function () {
   sendTransaction(false);
 };
-
-window.addEventListener('online', checkDatabase);
-
-
-
