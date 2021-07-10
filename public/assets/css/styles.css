@@ -43,6 +43,13 @@ tr:nth-child(even) {
   color: rgb(15, 85, 15);
 }
 
+#cswap {
+  width: 94.87%;
+  height: 100px;
+  transform: skewX(338deg);
+  font-size: 7vmax;
+}
+
 .negative {
   color: #800808;
   /* border: 5px dotted #800808; */
