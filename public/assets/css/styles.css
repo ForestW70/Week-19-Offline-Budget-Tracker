@@ -4,7 +4,8 @@ body {
   background-color: blanchedalmond;
 }
 
-button, input {
+button,
+input {
   font-size: 100%;
   font-family: Arial;
 }
@@ -13,7 +14,8 @@ table {
   width: 100%;
 }
 
-td, th {
+td,
+th {
   border: 1px solid #634545;
   text-align: left;
   padding: 8px;
@@ -34,24 +36,32 @@ tr:nth-child(even) {
 }
 
 .total {
-  font-size: 150%;
-  /* text-decoration: underline; */
-  border: 5px dotted rgb(105 106 117);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: underline;
+  border: 20px groove rgb(218 194 159);
   padding: 15px;
-  font-family: sans-serif;
-  font-style: italic;
-  color: rgb(15, 85, 15);
+  font-family: 'font-awesome';
+  /* font-style: italic; */
+  color: rgb(54 214 54);
 }
 
 #cswap {
   width: 94.87%;
   height: 100px;
-  transform: skewX(338deg);
-  font-size: 7vmax;
+  transform: skewX(310deg);
+  font-size: 2em;
+}
+
+.rombas {
+  transform: skewX(220deg);
+  width: 80%;
+  margin: 0 auto;
 }
 
 .negative {
-  color: #800808;
+  color: #ff2300;
   /* border: 5px dotted #800808; */
 }
 

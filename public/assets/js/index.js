@@ -37,7 +37,7 @@ const saveRecord = (offlineTransaction) => {
 function checkDatabase() {
   console.log('checking..');
   db = reqDB.result;
-  
+
   const transaction = db.transaction(["offlineList"], "readwrite");
   const offlineStore = transaction.objectStore('offlineList');
   const getAll = offlineStore.getAll();
@@ -54,8 +54,8 @@ function checkDatabase() {
           'Content-Type': 'application/json',
         },
       })
-      // if post was sucessful, convert response to json and check if res exists.
-      // if res exists, set up second transaction to clear indexedDB. catch err if needed.
+        // if post was sucessful, convert response to json and check if res exists.
+        // if res exists, set up second transaction to clear indexedDB. catch err if needed.
         .then((response) => response.json())
         .then((res) => {
           if (res.length !== 0) {
@@ -81,7 +81,10 @@ window.addEventListener('online', checkDatabase);
 let transactions = [];
 let myChart;
 
-fetch("/api/transaction")
+fetch("/api/transaction", {
+  method: 'GET',
+  headers: {},
+})
   .then(response => {
     return response.json();
   })
@@ -94,6 +97,7 @@ fetch("/api/transaction")
     populateChart();
   });
 
+
 function populateTotal() {
   // reduce transaction amounts to a single total value
   let total = transactions.reduce((total, t) => {
@@ -101,9 +105,9 @@ function populateTotal() {
   }, 0);
 
   let totalEl = document.querySelector("#total");
-  totalEl.textContent = total;
+  totalEl.textContent = `$${total}`;
 
-  // spice swap brought to you by Forest Wilson(tm)
+  // lil spice by Forest Wilson
   const totalContainer = document.querySelector("#cswap")
   if (total >= 0) {
     totalContainer.classList.remove('negative')
