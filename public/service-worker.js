@@ -45,7 +45,7 @@ self.addEventListener('install', (event) => {
 // after install, get names of all caches, then return a promise that maps through cache names, 
 // checks if the name is not one of our active cache names, then deletes it.
 self.addEventListener('activate', (event) => {
-  event.waitUntil(clients.claim());
+  // event.waitUntil(clients.claim());
 
   event.waitUntil(
     caches.keys().then(cacheNames => {
@@ -60,7 +60,8 @@ self.addEventListener('activate', (event) => {
   );
 
   // would have handled SW to activate immediatly, but had trouble implementing this.
-  // self.clients.claim();
+  self.clients.claim();
+  console.log('activated!~')
 });
 
 
@@ -69,7 +70,7 @@ self.addEventListener('activate', (event) => {
 // open runtime cache, then fetch request. if that responce is 200, then put a clone of that responce into cache with asociated url. return responce.
 // if responce is not 200, then look through cache and return what was cached for that route, or empty responce.
 self.addEventListener('fetch', (event) => {
-  event.waitUntil(clients.claim());
+  // event.waitUntil(clients.claim());
 
   if (event.request.url.includes('/api')) {
     event.respondWith(
