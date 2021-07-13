@@ -14,7 +14,7 @@ const FILES_TO_CACHE = [
   '/assets/images/icons/icon-192x192.png',
   '/manifest.webmanifest',
   'https://fonts.googleapis.com/css?family=Istok+Web|Montserrat:800&display=swap',
-  'https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css',
+  'https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css'
 ];
 
 
@@ -29,15 +29,15 @@ const RUNTIME = 'runtime-cache';
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(RUNTIME).then(cache => {
-      cache.addAll(['/api/transaction']);
+      cache.addAll(["/api/transaction"]);
     }),
     caches.open(PRECACHE).then(cache => {
       cache.addAll(FILES_TO_CACHE);
-    })
+    }).then(() => self.skipWaiting())
   );
 
   // forces the waiting service worker to replace the active service worker if there is already an installed one. 
-  self.skipWaiting();
+  // self.skipWaiting();
 });
 
 
@@ -45,7 +45,7 @@ self.addEventListener('install', (event) => {
 // after install, get names of all caches, then return a promise that maps through cache names, 
 // checks if the name is not one of our active cache names, then deletes it.
 self.addEventListener('activate', (event) => {
-  // event.waitUntil(clients.claim());
+  const currentCaches = [PRECACHE, RUNTIME];
 
   event.waitUntil(
     caches.keys().then(cacheNames => {
@@ -56,11 +56,11 @@ self.addEventListener('activate', (event) => {
           }
         })
       );
-    })
+    }).then(() => self.clients.claim())
   );
 
   // would have handled SW to activate immediatly, but had trouble implementing this.
-  self.clients.claim();
+  // self.clients.claim();
   console.log('activated!~')
 });
 
