@@ -70,38 +70,55 @@ self.addEventListener('activate', (event) => {
 // open runtime cache, then fetch request. if that responce is 200, then put a clone of that responce into cache with asociated url. return responce.
 // if responce is not 200, then look through cache and return what was cached for that route, or empty responce.
 self.addEventListener('fetch', (event) => {
-  // event.waitUntil(clients.claim());
 
-  if (event.request.url.includes('/api')) {
+  if (event.request.method !== 'GET' || !event.request.url.startsWith(self.location.origin)) {
+    event.respondWith(fetch(event.request));
+    return;
+  }
+
+  if (event.request.url.includes('/api/transaction')) {
     event.respondWith(
       caches.open(RUNTIME).then(cache => {
         return fetch(event.request)
           .then(res => {
-            if (res.status === 200) {
-              cache.put(event.request.url, res.clone());
-            }
+            cache.put(event.request.url, res.clone());
             return res;
           })
-          .catch(err => {
-            return cache.match(event.request) || {};
-          });
-      }).catch(err => console.log(err))
-    );
-  } else {
+          .catch(() => caches.match(event.request));
+        })
+      );
+    return;
+  } 
 
     // if request doenst include "...", then fetch request, which will err, and catch.
     // return the matched request from cache, and return response.
+    // event.respondWith(
+    //   fetch(event.request).catch(() => {
+    //     return caches.match(event.request).then(res => {
+    //       if (res) {
+    //         return res;
+    //       }
+    //     })
+    //   })
+    // )
+
     event.respondWith(
-      fetch(event.request).catch(() => {
-        return caches.match(event.request).then(res => {
-          if (res) {
-            return res;
-          }
-        })
+      caches.match(event.request).then(cachedResponse => {
+        if (cachedResponse) {
+          return cachedResponse;
+        }
+  
+        return caches.open(PRECACHE).then(cache => {
+          return fetch(event.request).then(response => {
+            return cache.put(event.request, response.clone()).then(() => {
+              return response;
+            });
+          });
+        });
       })
-    )
+    );
   }
-});
+);
 
 
 
