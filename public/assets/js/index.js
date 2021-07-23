@@ -26,7 +26,7 @@ reqDB.onsuccess = (e) => {
     checkDatabase();
   }
 
-  fetch('/transaction')
+  fetch('/api/transaction')
     .then(response => {
       return response.json();
     })
@@ -40,13 +40,6 @@ reqDB.onsuccess = (e) => {
       console.log(err);
     })
 }
-
-
-
-
-
-
-
 
 
 // ------------------------------------//
