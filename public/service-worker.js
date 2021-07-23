@@ -56,10 +56,12 @@ self.addEventListener('activate', (event) => {
           return caches.delete(cacheToDelete);
         })
       );
-    }).then(() => self.clients.claim())
+    }).then(() => {
+      self.clients.claim();
+      console.log('activated!~');
+    })
   );
 
-  console.log('activated!~')
 });
 
 

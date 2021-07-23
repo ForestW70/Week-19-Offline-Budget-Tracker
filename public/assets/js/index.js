@@ -3,7 +3,7 @@ let myChart;
 
 // create open db to create transactions, create variable to handle open requests.
 let db;
-const reqDB = indexedDB.open("offlineBugetList", 6);
+const reqDB = indexedDB.open("offlineBugetList", 7);
 
 
 // if DB is out of date, reset db variable, create new object store. check for error or sucess.
@@ -11,11 +11,11 @@ reqDB.onupgradeneeded = event => {
   db = event.target.result;
 
   if (db.objectStoreNames.length === 0) {
-    db.createObjectStore("offlineList", { keyPath: "offlineID", autoIncrement: true });
+    db.createObjectStore("offlineList", { autoIncrement: true });
   }
 };
-reqDB.onerror = () => {
-  console.log("Error", reqDB.error);
+reqDB.onerror = (err) => {
+  console.error(err);
 };
 
 reqDB.onsuccess = (e) => {
