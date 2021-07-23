@@ -78,9 +78,9 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(
       caches.open(RUNTIME).then(cache => {
         return fetch(event.request)
-          .then(res => {
-            cache.put(event.request, res.clone());
-            return res;
+          .then(response => {
+            cache.put(event.request, response.clone());
+            return response;
           })
           .catch(() => caches.match(event.request));
       })
@@ -95,16 +95,15 @@ self.addEventListener('fetch', (event) => {
       }
 
       return caches.open(RUNTIME).then(cache => {
-        return fetch(event.request).then(res => {
-          return cache.put(event.request, res.clone()).then(() => {
-            return res;
+        return fetch(event.request).then(response => {
+          return cache.put(event.request, response.clone()).then(() => {
+            return response;
           });
         });
       });
     })
   );
-}
-);
+});
 
 
 

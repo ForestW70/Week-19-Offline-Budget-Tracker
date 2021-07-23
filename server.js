@@ -1,6 +1,5 @@
 const express = require("express");
 const logger = require("morgan");
-const path = require("path");
 const mongoose = require("mongoose");
 const compression = require("compression");
 
@@ -14,13 +13,11 @@ app.use(compression());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
-app.use(express.static(path.join(__dirname, "public")));
+app.use(express.static("public"));
 
 mongoose.connect(process.env.MONGODB_URI || "mongodb://localhost/budget", {
   useNewUrlParser: true,
-  useFindAndModify: false,
-  useUnifiedTopology: true,
-  useCreateIndex: true
+  useFindAndModify: false
 });
 
 // routes
