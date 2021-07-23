@@ -1,3 +1,7 @@
+const { response } = require("express");
+
+// store transactions
+let transactions = [];
 
 // create open db to create transactions, create variable to handle open requests.
 let db;
@@ -7,14 +11,35 @@ const reqDB = window.indexedDB.open("offlineBugetList", 5);
 // if DB is out of date, reset db variable, create new object store. check for error or sucess.
 reqDB.onupgradeneeded = event => {
   db = event.target.result;
-  const offlineStore = db.createObjectStore("offlineList", { keyPath: "offlineID", autoIncrement: true });
+
+  if (db.objectStoreNames.length === 0) {
+    const offlineStore = db.createObjectStore("offlineList", { keyPath: "offlineID", autoIncrement: true });
+  }
 }
 reqDB.onerror = () => {
   console.log("Error", reqDB.error);
 };
-reqDB.onsuccess = () => {
-  db = reqDB.result;
+reqDB.onsuccess = (e) => {
+  db = e.target.result;
   console.log("connected to indexedDB store");
+
+  if (navigator.onLine) {
+    checkDatabase();
+  }
+
+  fetch('/api/transaction')
+    .then(response => {
+      return response.json();
+    })
+    .then(data => {
+      transactions = data;
+      populateTotal();
+      populateTable();
+      populateChart();
+    })
+    .catch(err => {
+      console.log(err);
+    })
 }
 
 
@@ -29,6 +54,10 @@ const saveRecord = (offlineTransaction) => {
 
   request.onsuccess = () => console.log("entry added to the store", request.result);
   request.onerror = () => console.log("Error", request.error);
+
+  populateTotal();
+  populateTable();
+  populateChart();
 }
 
 
@@ -36,7 +65,7 @@ const saveRecord = (offlineTransaction) => {
 // set up transaction process to create a getAll request from DB.
 function checkDatabase() {
   console.log('checking..');
-  db = reqDB.result;
+  // db = reqDB.result;
 
   const transaction = db.transaction(["offlineList"], "readwrite");
   const offlineStore = transaction.objectStore('offlineList');
@@ -62,6 +91,20 @@ function checkDatabase() {
             const transaction2 = db.transaction(["offlineList"], "readwrite");
             const offlineStore = transaction2.objectStore('offlineList');
             offlineStore.clear();
+
+            fetch("/api/transaction")
+              .then((response) => {
+                return response.json();
+              })
+              .then((data) => {
+                // save db data on global variable
+                transactions = data;
+
+                populateTotal();
+                populateTable();
+                populateChart();
+              })
+
             console.log('Offline cached.');
           }
         }).catch(err => console.log(err));
@@ -78,24 +121,24 @@ window.addEventListener('online', checkDatabase);
 // ** Following code courtesy of 2U ** //
 // ------------------------------------//
 
-let transactions = [];
+
 let myChart;
 
-fetch("/api/transaction", {
-  method: 'GET',
-  headers: {},
-})
-  .then(response => {
-    return response.json();
-  })
-  .then(data => {
-    // save db data on global variable
-    transactions = data;
+// fetch("/api/transaction", {
+//   method: 'GET',
+//   headers: {},
+// })
+//   .then(response => {
+//     return response.json();
+//   })
+//   .then(data => {
+//     // save db data on global variable
+//     transactions = data;
 
-    populateTotal();
-    populateTable();
-    populateChart();
-  });
+//     populateTotal();
+//     populateTable();
+//     populateChart();
+//   });
 
 
 function populateTotal() {
@@ -107,7 +150,7 @@ function populateTotal() {
   let totalEl = document.querySelector("#total");
   totalEl.textContent = `$${total}`;
 
-  // lil spice by Forest Wilson
+  // lil spice
   const totalContainer = document.querySelector("#cswap")
   if (total >= 0) {
     totalContainer.classList.remove('negative')
@@ -179,8 +222,7 @@ function sendTransaction(isAdding) {
   if (nameEl.value === "" || amountEl.value === "") {
     errorEl.textContent = "Missing Information";
     return;
-  }
-  else {
+  } else {
     errorEl.textContent = "";
   }
 
@@ -199,10 +241,6 @@ function sendTransaction(isAdding) {
   // add to beginning of current array of data
   transactions.unshift(transaction);
 
-  // re-run logic to populate ui with new record
-  populateChart();
-  populateTable();
-  populateTotal();
 
   // also send to server
   fetch("/api/transaction", {
@@ -219,12 +257,16 @@ function sendTransaction(isAdding) {
     .then(data => {
       if (data.errors) {
         errorEl.textContent = "Missing Information";
-      }
-      else {
+      } else {
         // clear form
         nameEl.value = "";
         amountEl.value = "";
       }
+
+      // re-run logic to populate ui with new record
+      populateChart();
+      populateTable();
+      populateTotal();
     })
     .catch(err => {
       saveRecord(transaction);
