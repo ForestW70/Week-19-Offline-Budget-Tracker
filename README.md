@@ -22,6 +22,7 @@ MIT - ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)(https
   4. IndexedDB
   5. Service worker
   6. Heroku
+  7. Mongo Atlas
 
 * # Project description:
   It's time for you to start watching your spending habits, how else will you learn the value of a dollar? Use this PWA to log all of your money going in and out and see a graphical representation of your current balance. You may even keep track when you are in a different country and have no internet connection.
