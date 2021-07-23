@@ -32,12 +32,10 @@ self.addEventListener('install', (event) => {
       cache.addAll(["/api/transaction"]);
     }),
     caches.open(PRECACHE).then(cache => {
-      cache.addAll(FILES_TO_CACHE);
-    }).then(() => self.skipWaiting())
+      cache.addAll(FILES_TO_CACHE)
+        .then(() => self.skipWaiting())
+    })
   );
-
-  // forces the waiting service worker to replace the active service worker if there is already an installed one. 
-  // self.skipWaiting();
 });
 
 
@@ -49,18 +47,18 @@ self.addEventListener('activate', (event) => {
 
   event.waitUntil(
     caches.keys().then(cacheNames => {
+      return cacheNames.filter(
+        cacheName => !currentCaches.includes(cacheName)
+      );
+    }).then(unusedCaches => {
       return Promise.all(
-        cacheNames.map(name => {
-          if (name !== PRECACHE && name !== RUNTIME) {
-            return caches.delete(name);
-          }
+        unusedCaches.map(cacheToDelete => {
+          return caches.delete(cacheToDelete);
         })
       );
     }).then(() => self.clients.claim())
   );
 
-  // would have handled SW to activate immediatly, but had trouble implementing this.
-  // self.clients.claim();
   console.log('activated!~')
 });
 
@@ -81,43 +79,31 @@ self.addEventListener('fetch', (event) => {
       caches.open(RUNTIME).then(cache => {
         return fetch(event.request)
           .then(res => {
-            cache.put(event.request.url, res.clone());
+            cache.put(event.request, res.clone());
             return res;
           })
           .catch(() => caches.match(event.request));
-        })
-      );
-    return;
-  } 
-
-    // if request doenst include "...", then fetch request, which will err, and catch.
-    // return the matched request from cache, and return response.
-    // event.respondWith(
-    //   fetch(event.request).catch(() => {
-    //     return caches.match(event.request).then(res => {
-    //       if (res) {
-    //         return res;
-    //       }
-    //     })
-    //   })
-    // )
-
-    event.respondWith(
-      caches.match(event.request).then(cachedResponse => {
-        if (cachedResponse) {
-          return cachedResponse;
-        }
-  
-        return caches.open(PRECACHE).then(cache => {
-          return fetch(event.request).then(response => {
-            return cache.put(event.request, response.clone()).then(() => {
-              return response;
-            });
-          });
-        });
       })
     );
+    return;
   }
+
+  event.respondWith(
+    caches.match(event.request).then(cachedResponse => {
+      if (cachedResponse) {
+        return cachedResponse;
+      }
+
+      return caches.open(RUNTIME).then(cache => {
+        return fetch(event.request).then(res => {
+          return cache.put(event.request, res.clone()).then(() => {
+            return res;
+          });
+        });
+      });
+    })
+  );
+}
 );
 
 
