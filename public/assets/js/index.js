@@ -1,11 +1,9 @@
-const { response } = require("express");
-
-// store transactions
 let transactions = [];
+let myChart;
 
 // create open db to create transactions, create variable to handle open requests.
 let db;
-const reqDB = window.indexedDB.open("offlineBugetList", 5);
+const reqDB = indexedDB.open("offlineBugetList", 6);
 
 
 // if DB is out of date, reset db variable, create new object store. check for error or sucess.
@@ -13,12 +11,13 @@ reqDB.onupgradeneeded = event => {
   db = event.target.result;
 
   if (db.objectStoreNames.length === 0) {
-    const offlineStore = db.createObjectStore("offlineList", { keyPath: "offlineID", autoIncrement: true });
+    db.createObjectStore("offlineList", { keyPath: "offlineID", autoIncrement: true });
   }
-}
+};
 reqDB.onerror = () => {
   console.log("Error", reqDB.error);
 };
+
 reqDB.onsuccess = (e) => {
   db = e.target.result;
   console.log("connected to indexedDB store");
@@ -43,77 +42,10 @@ reqDB.onsuccess = (e) => {
 }
 
 
-// save record to be used if application is offline.
-// set up transaction, link transaction to offline store, then create an add request for passed object.
-// handle sucess/error
-const saveRecord = (offlineTransaction) => {
-  db = reqDB.result;
-  const transaction = db.transaction(["offlineList"], "readwrite");
-  const offlineStore = transaction.objectStore("offlineList");
-  const request = offlineStore.add(offlineTransaction);
-
-  request.onsuccess = () => console.log("entry added to the store", request.result);
-  request.onerror = () => console.log("Error", request.error);
-
-  populateTotal();
-  populateTable();
-  populateChart();
-}
 
 
-// function to check database once app returns to online mode.
-// set up transaction process to create a getAll request from DB.
-function checkDatabase() {
-  console.log('checking..');
-  // db = reqDB.result;
 
-  const transaction = db.transaction(["offlineList"], "readwrite");
-  const offlineStore = transaction.objectStore('offlineList');
-  const getAll = offlineStore.getAll();
 
-  // If the request was successful, check to see if there are any results.
-  // if so, fetch post request to api to add all results to db using body.
-  getAll.onsuccess = function () {
-    if (getAll.result.length > 0) {
-      fetch('/api/transaction/bulk', {
-        method: 'POST',
-        body: JSON.stringify(getAll.result),
-        headers: {
-          Accept: 'application/json, text/plain, */*',
-          'Content-Type': 'application/json',
-        },
-      })
-        // if post was sucessful, convert response to json and check if res exists.
-        // if res exists, set up second transaction to clear indexedDB. catch err if needed.
-        .then((response) => response.json())
-        .then((res) => {
-          if (res.length !== 0) {
-            const transaction2 = db.transaction(["offlineList"], "readwrite");
-            const offlineStore = transaction2.objectStore('offlineList');
-            offlineStore.clear();
-
-            fetch("/api/transaction")
-              .then((response) => {
-                return response.json();
-              })
-              .then((data) => {
-                // save db data on global variable
-                transactions = data;
-
-                populateTotal();
-                populateTable();
-                populateChart();
-              })
-
-            console.log('Offline cached.');
-          }
-        }).catch(err => console.log(err));
-    }
-  };
-}
-
-// event handler to look if app returns to online. if so, run checkdb function.
-window.addEventListener('online', checkDatabase);
 
 
 
@@ -122,7 +54,7 @@ window.addEventListener('online', checkDatabase);
 // ------------------------------------//
 
 
-let myChart;
+
 
 // fetch("/api/transaction", {
 //   method: 'GET',
@@ -285,3 +217,76 @@ document.querySelector("#add-btn").onclick = function () {
 document.querySelector("#sub-btn").onclick = function () {
   sendTransaction(false);
 };
+
+
+// function to check database once app returns to online mode.
+// set up transaction process to create a getAll request from DB.
+function checkDatabase() {
+  console.log('checking..');
+  // db = reqDB.result;
+
+  const transaction = db.transaction(["offlineList"], "readwrite");
+  const offlineStore = transaction.objectStore('offlineList');
+  const getAll = offlineStore.getAll();
+
+  // If the request was successful, check to see if there are any results.
+  // if so, fetch post request to api to add all results to db using body.
+  getAll.onsuccess = function () {
+    if (getAll.result.length > 0) {
+      fetch('/api/transaction/bulk', {
+        method: 'POST',
+        body: JSON.stringify(getAll.result),
+        headers: {
+          Accept: 'application/json, text/plain, */*',
+          'Content-Type': 'application/json',
+        },
+      })
+        // if post was sucessful, convert response to json and check if res exists.
+        // if res exists, set up second transaction to clear indexedDB. catch err if needed.
+        .then((response) => response.json())
+        .then((res) => {
+          if (res.length !== 0) {
+            const transaction2 = db.transaction(["offlineList"], "readwrite");
+            const offlineStore = transaction2.objectStore('offlineList');
+            offlineStore.clear();
+
+            fetch("/api/transaction")
+              .then((response) => {
+                return response.json();
+              })
+              .then((data) => {
+                // save db data on global variable
+                transactions = data;
+
+                populateTotal();
+                populateTable();
+                populateChart();
+              })
+
+            console.log('Offline cached.');
+          }
+        }).catch(err => console.log(err));
+    }
+  };
+}
+
+
+// save record to be used if application is offline.
+// set up transaction, link transaction to offline store, then create an add request for passed object.
+// handle sucess/error
+const saveRecord = (offlineTransaction) => {
+  db = reqDB.result;
+  const transaction = db.transaction(["offlineList"], "readwrite");
+  const offlineStore = transaction.objectStore("offlineList");
+  const request = offlineStore.add(offlineTransaction);
+
+  request.onsuccess = () => console.log("entry added to the store", request.result);
+  request.onerror = () => console.log("Error", request.error);
+
+  populateTotal();
+  populateTable();
+  populateChart();
+}
+
+// event handler to look if app returns to online. if so, run checkdb function.
+window.addEventListener('online', checkDatabase);
