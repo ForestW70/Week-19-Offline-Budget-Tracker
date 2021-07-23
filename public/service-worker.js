@@ -76,7 +76,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  if (event.request.url.includes('/transaction')) {
+  if (event.request.url.includes('/api/transaction')) {
     event.respondWith(
       caches.open(RUNTIME).then(cache => {
         return fetch(event.request)
