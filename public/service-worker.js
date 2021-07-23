@@ -68,7 +68,7 @@ self.addEventListener('activate', (event) => {
 // fetch event
 // if request url includes "...", then intercept that, and respond with
 // open runtime cache, then fetch request. if that responce is 200, then put a clone of that responce into cache with asociated url. return responce.
-// if responce is not 200, then look through cache and return what was cached for that route, or empty responce.
+// if responce is not 200, then look through cache and return what was cached for that route.
 self.addEventListener('fetch', (event) => {
 
   if (event.request.method !== 'GET' || !event.request.url.startsWith(self.location.origin)) {

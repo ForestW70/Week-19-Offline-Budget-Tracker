@@ -18,6 +18,7 @@ reqDB.onerror = (err) => {
   console.error(err);
 };
 
+// on success, load in saved transactions
 reqDB.onsuccess = (e) => {
   db = e.target.result;
   console.log("connected to indexedDB store");
@@ -45,26 +46,6 @@ reqDB.onsuccess = (e) => {
 // ------------------------------------//
 // ** Following code courtesy of 2U ** //
 // ------------------------------------//
-
-
-
-
-// fetch("/api/transaction", {
-//   method: 'GET',
-//   headers: {},
-// })
-//   .then(response => {
-//     return response.json();
-//   })
-//   .then(data => {
-//     // save db data on global variable
-//     transactions = data;
-
-//     populateTotal();
-//     populateTable();
-//     populateChart();
-//   });
-
 
 function populateTotal() {
   // reduce transaction amounts to a single total value
@@ -211,12 +192,16 @@ document.querySelector("#sub-btn").onclick = function () {
   sendTransaction(false);
 };
 
+// ------------------------------------//
+// *************** End *************** //
+// ------------------------------------//
+
+
 
 // function to check database once app returns to online mode.
 // set up transaction process to create a getAll request from DB.
 function checkDatabase() {
   console.log('checking..');
-  // db = reqDB.result;
 
   const transaction = db.transaction(["offlineList"], "readwrite");
   const offlineStore = transaction.objectStore('offlineList');
@@ -235,7 +220,7 @@ function checkDatabase() {
         },
       })
         // if post was sucessful, convert response to json and check if res exists.
-        // if res exists, set up second transaction to clear indexedDB. catch err if needed.
+        // if res exists, set up second transaction to clear indexedDB. refresh list. catch err if needed.
         .then((response) => response.json())
         .then((res) => {
           if (res.length !== 0) {
