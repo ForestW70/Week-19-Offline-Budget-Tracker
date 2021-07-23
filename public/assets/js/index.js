@@ -26,12 +26,12 @@ reqDB.onsuccess = (e) => {
     checkDatabase();
   }
 
-  fetch('/api/transaction')
+  fetch('/transaction')
     .then(response => {
       return response.json();
     })
     .then(data => {
-      transactions = data;
+      transactions = data || [];
       populateTotal();
       populateTable();
       populateChart();

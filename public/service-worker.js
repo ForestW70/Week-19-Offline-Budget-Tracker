@@ -29,7 +29,7 @@ const RUNTIME = 'runtime-cache';
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(RUNTIME).then(cache => {
-      cache.addAll(["/api/transaction"]);
+      cache.addAll(["/transaction"]);
     }),
     caches.open(PRECACHE).then(cache => {
       cache.addAll(FILES_TO_CACHE)
@@ -76,7 +76,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  if (event.request.url.includes('/api/transaction')) {
+  if (event.request.url.includes('/transaction')) {
     event.respondWith(
       caches.open(RUNTIME).then(cache => {
         return fetch(event.request)
