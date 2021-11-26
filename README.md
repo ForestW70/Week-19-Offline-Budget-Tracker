@@ -68,5 +68,5 @@ MIT - ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)(https
   ![App bottom](./assets/images/app-bottom.png)
 
 * Links:
-  - [Repo page](https://github.com/ForestW70/hw19offlinebudgettracker)
+  - [Repo page](https://github.com/ForestW70/Week-19-Offline-Budget-Tracker)
   - [Live site](https://budgettracker3456.herokuapp.com/)
